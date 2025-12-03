@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+/* That is all you need for Tailwind v4! 
+   You can add custom global styles below if needed, 
+   but for this mockup, we will rely on utility classes.
+*/
+body {
+  @apply bg-gray-100;
+}
