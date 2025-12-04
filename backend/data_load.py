@@ -6,14 +6,11 @@ import pytz
 import requests
 from requests.models import Request
 import requests_cache
+from nba_api.stats.library.http import NBAStatsHTTP
 from bs4 import BeautifulSoup
 import unicodedata
-
 from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv3
-from nba_api.stats.library.http import NBAStatsHTTP
 from nba_api.live.nba.endpoints import scoreboard
-
-
 from utils import strip, WNI, rate_limited_call, get_rotowire_lineups
 
 def load_data():
@@ -21,33 +18,31 @@ def load_data():
             'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL',
             'PHI', 'PHX', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']
 
-    seasons = ["2016-17", "2017-18", "2018-19", "2019-20", "2020-21", "2021-22", "2022-23", "2023-24", "2024-25", "2025-26"]
+    seasons = ["2022-23", "2023-24", "2024-25", "2025-26"]
 
     drop_cols = ['TEAM_ID', 'TEAM_NAME', 'SEASON_ID']
     frames = []
 
-    # caching/rate limiting
-    requests_cache.install_cache('nba_api_cache', expire_after=7*24*3600)
-    NBAStatsHTTP._session = requests_cache.CachedSession('nba_api_cache', backend='sqlite')
+
     #get boxscores across every season in seasons
     for season in seasons:
-        url = f"https://stats.nba.com/stats/leaguegamefinder?Conference=&DateFrom=&DateTo=&Division=&DraftNumber=&DraftRound=&DraftTeamID=&DraftYear=&EqAST=&EqBLK=&EqDD=&EqDREB=&EqFG3A=&EqFG3M=&EqFG3_PCT=&EqFGA=&EqFGM=&EqFG_PCT=&EqFTA=&EqFTM=&EqFT_PCT=&EqMINUTES=&EqOREB=&EqPF=&EqPTS=&EqREB=&EqSTL=&EqTD=&EqTOV=&GameID=&GtAST=&GtBLK=&GtDD=&GtDREB=&GtFG3A=&GtFG3M=&GtFG3_PCT=&GtFGA=&GtFGM=&GtFG_PCT=&GtFTA=&GtFTM=&GtFT_PCT=&GtMINUTES=&GtOREB=&GtPF=&GtPTS=&GtREB=&GtSTL=&GtTD=&GtTOV=&LeagueID=00&Location=&LtAST=&LtBLK=&LtDD=&LtDREB=&LtFG3A=&LtFG3M=&LtFG3_PCT=&LtFGA=&LtFGM=&LtFG_PCT=&LtFTA=&LtFTM=&LtFT_PCT=&LtMINUTES=&LtOREB=&LtPF=&LtPTS=&LtREB=&LtSTL=&LtTD=&LtTOV=&Outcome=&PORound=&PlayerID=&PlayerOrTeam=T&RookieYear=&Season={season}&SeasonSegment=&SeasonType=Regular+Season&StarterBench=&TeamID=&VsConference=&VsDivision=&VsTeamID=&YearsExperience="
-        req = Request('GET', url).prepare()
-        key = NBAStatsHTTP._session.cache.create_key(req)
-        cached_response = NBAStatsHTTP._session.cache.get_response(key)
+        # url = f"https://stats.nba.com/stats/leaguegamefinder?Conference=&DateFrom=&DateTo=&Division=&DraftNumber=&DraftRound=&DraftTeamID=&DraftYear=&EqAST=&EqBLK=&EqDD=&EqDREB=&EqFG3A=&EqFG3M=&EqFG3_PCT=&EqFGA=&EqFGM=&EqFG_PCT=&EqFTA=&EqFTM=&EqFT_PCT=&EqMINUTES=&EqOREB=&EqPF=&EqPTS=&EqREB=&EqSTL=&EqTD=&EqTOV=&GameID=&GtAST=&GtBLK=&GtDD=&GtDREB=&GtFG3A=&GtFG3M=&GtFG3_PCT=&GtFGA=&GtFGM=&GtFG_PCT=&GtFTA=&GtFTM=&GtFT_PCT=&GtMINUTES=&GtOREB=&GtPF=&GtPTS=&GtREB=&GtSTL=&GtTD=&GtTOV=&LeagueID=00&Location=&LtAST=&LtBLK=&LtDD=&LtDREB=&LtFG3A=&LtFG3M=&LtFG3_PCT=&LtFGA=&LtFGM=&LtFG_PCT=&LtFTA=&LtFTM=&LtFT_PCT=&LtMINUTES=&LtOREB=&LtPF=&LtPTS=&LtREB=&LtSTL=&LtTD=&LtTOV=&Outcome=&PORound=&PlayerID=&PlayerOrTeam=T&RookieYear=&Season={season}&SeasonSegment=&SeasonType=Regular+Season&StarterBench=&TeamID=&VsConference=&VsDivision=&VsTeamID=&YearsExperience="
+        # req = Request('GET', url).prepare()
+        # key = NBAStatsHTTP._session.cache.create_key(req)
+        # cached_response = NBAStatsHTTP._session.cache.get_response(key)
 
-        if cached_response is not None:
-            response = cached_response.json()
-            df = pd.DataFrame(response['resultSets'][0]['rowSet'], columns = response['resultSets'][0]['headers'])
-        else:
-            gamefinder = leaguegamefinder.LeagueGameFinder(
-                league_id_nullable='00',
-                season_nullable=season,
-                season_type_nullable='Regular Season',
-                date_to_nullable= (datetime.now(pytz.timezone('US/Pacific')) - timedelta(days=1)).strftime('%Y-%m-%d')
-
-            )
-            df = gamefinder.get_data_frames()[0]
+ 
+        gamefinder = leaguegamefinder.LeagueGameFinder(
+            league_id_nullable='00',
+            season_nullable=season,
+            season_type_nullable='Regular Season',
+            date_to_nullable= (datetime.now(pytz.timezone('US/Pacific')) - timedelta(days=1)).strftime('%Y-%m-%d')
+        ) if season =='2025-26' else leaguegamefinder.LeagueGameFinder(
+            league_id_nullable='00',
+            season_nullable=season,
+            season_type_nullable='Regular Season',
+        )
+        df = gamefinder.get_data_frames()[0]
 
         df = df.drop(columns=drop_cols)
 

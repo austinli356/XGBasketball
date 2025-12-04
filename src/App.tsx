@@ -104,7 +104,7 @@ const App: React.FC = () => {
     fetchLiveScores();
 
     // Set up an interval to refresh the scores every 30 seconds
-    const intervalId = setInterval(fetchLiveScores, 30000); 
+    const intervalId = setInterval(fetchLiveScores, 3000000); 
 
     // Cleanup function to clear the interval when the component is unmounted
     return () => clearInterval(intervalId);

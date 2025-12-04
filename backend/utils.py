@@ -3,16 +3,15 @@ import unicodedata
 import requests
 import requests_cache
 from requests.models import Request
+from nba_api.stats.library.http import NBAStatsHTTP
+requests_cache.install_cache('nba_api_cache', expire_after=7*24*3600)
+NBAStatsHTTP._session = requests_cache.CachedSession('nba_api_cache', backend='sqlite')
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
-
 from nba_api.stats.endpoints import boxscoreadvancedv3
-from nba_api.stats.library.http import NBAStatsHTTP
 
 
-requests_cache.install_cache('nba_api_cache', expire_after=7*24*3600)
-NBAStatsHTTP._session = requests_cache.CachedSession('nba_api_cache', backend='sqlite')
 
 def removeSuffix(s):
   split = s.strip().split(" ")
