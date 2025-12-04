@@ -1,6 +1,6 @@
 // src/App.tsx
 import React, { useState, useEffect } from 'react';
-import type { Game, Team } from './types'; 
+import type { Game} from './types'; 
 
 
 const getLogoUrl = (text: string, color: string) => 
