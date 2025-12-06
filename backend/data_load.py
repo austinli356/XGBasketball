@@ -145,7 +145,6 @@ def load_data():
         df.at[idx, 'GAME_DATE'] = GAME_DATE
         df.at[idx, 'TEAM_ABBREVIATION'] = away
         df.at[idx, 'starters'] = row['awayLineup']
-
     return df, player_df, scraped_df
 
 

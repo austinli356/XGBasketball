@@ -50,3 +50,7 @@ build/
 # System files
 .DS_Store
 Thumbs.db
+
+backend/
+*.json
+*.sqlite

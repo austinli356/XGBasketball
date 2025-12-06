@@ -5,7 +5,7 @@ export interface Team {
   abbreviation: string;
   score: number;
   color: string;
-  winProb: number;
+  winProb: null;
 }
 
 export interface Game {

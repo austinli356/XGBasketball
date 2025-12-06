@@ -114,7 +114,6 @@ def get_rotowire_lineups():
     cache_buster = int(time.time())
     url = f"https://www.rotowire.com/basketball/nba-lineups.php?t={cache_buster}"
     headers = {"User-Agent": "Mozilla/5.0"}
-
     r = requests.get(url, headers=headers)
     soup = BeautifulSoup(r.text, "html.parser")
     date = soup.find("div", class_="page-title__secondary")

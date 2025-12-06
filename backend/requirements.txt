@@ -9,3 +9,4 @@ requests-cache==0.9.9
 beautifulsoup4==4.12.2
 pytz==2025.7
 nba-api==1.1.10
+datetime==6.0

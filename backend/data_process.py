@@ -73,9 +73,9 @@ def process_data(df, player_df):
     df = df.drop(columns=['next_GAME_DATE'])
 
     df['streak'] = 0
-    df['streak'] = df.groupby(['TEAM_ABBREVIATION', 'season'], group_keys=False).apply(computeStreak)
+    df['streak'] = df.groupby(['TEAM_ABBREVIATION', 'season'], group_keys=False).apply(computeStreak, include_groups=False)
     df['record'] = 0
-    df['record'] = df.groupby(['TEAM_ABBREVIATION', 'season'], group_keys=False).apply(computeRecord)
+    df['record'] = df.groupby(['TEAM_ABBREVIATION', 'season'], group_keys=False).apply(computeRecord, include_groups=False)
     df.sort_values(by=['TEAM_ABBREVIATION', 'season', 'GAME_DATE'], ascending=[True, True, True], inplace=True)
     df.reset_index(drop=True, inplace=True)
 
