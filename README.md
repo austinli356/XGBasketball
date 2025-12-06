@@ -16,7 +16,7 @@ This project is an **end-to-end, production-ready Machine Learning system** desi
 | Status | Link |
 | :--- | :--- |
 | **Live Inference Service** | [loading...] |
-| **Project Code** | [https://github.com/austinli356/XGBasketball/blob/main/README.md |
+| **Project Code** | [https://github.com/austinli356/XGBasketball] |
 | **Experiment Tracking** | [loading...] |
 
 -----
