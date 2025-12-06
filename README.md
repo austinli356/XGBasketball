@@ -6,7 +6,7 @@ This project is an **end-to-end, production-ready Machine Learning system** desi
 | :--- | :--- | :--- |
 | **Model** | XGBoost, scikit-learn, Optuna | Achieves **72%** accuracy and uses **SHAP** for interpretability. |
 | **Data Pipeline** | Pandas, NBA API, Web Scraping | Aggregates 20k+ games, generating features in **subsecond** time. |
-| **Inference Service** | Flask API, Docker | Serves predictions with **\<200ms latency** (if measured). |
+| **Inference Service** | Flask API, Docker | Serves predictions with **\<200ms latency**. |
 | **Frontend** | React, TypeScript | Presents real-time predictions and backtesting analytics. |
 
 <br>
