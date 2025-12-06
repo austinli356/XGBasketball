@@ -38,8 +38,8 @@ This system is built for **reproducibility and scalability**.
 
 ### 3\. Production Deployment
 
-  * **Containerization:** The Flask API inference service is fully **Dockerized** to ensure consistent runtime across development, testing, and production environments.
-  * **Full Stack:** The system utilizes a **Flask API** backend for serving the model weights and inference requests, coupled with a responsive **React/TypeScript** frontend for visualization.
+  * **Containerization:** The model's prediction service is fully **Dockerized** with a Fast API to ensure consistent runtime across development, testing, and production environments.
+  * **Full Stack:** The system utilizes a **Flask API** backend for fetching live game data, creating features needed for inference and serving predictions, coupled with a responsive **React/TypeScript** frontend for visualization.
 
 -----
 
