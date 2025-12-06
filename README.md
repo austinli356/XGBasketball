@@ -27,13 +27,14 @@ This system is built for **reproducibility and scalability**.
 
 ### 1\. Model Training & Optimization
 
-  * **Hyperparameter Tuning:** Used **Optuna** with Bayesian optimization to significantly tune the XGBoost model parameters, achieving a **5%+ AUC improvement** over baseline models.
+  * **Hyperparameter Tuning:** Used **Optuna** for Bayesian optimization to tune the XGBoost model parameters, achieving a **5%+ AUC improvement** over untuned baseline models.
   * **Interpretability:** Integrated **SHAP** (SHapley Additive exPlanations) to provide local and global explanations for model predictions, ensuring trust and validating feature importance.
 
 ### 2\. Feature Engineering & Performance
 
   * **Vectorization:** All feature engineering is fully **vectorized** using NumPy and Pandas to achieve subsecond processing times for real-time predictions.
   * **Temporal Features:** Generated over 200 features based on multi-scale **Exponentially Weighted Moving Averages (EWMA)** to capture team performance trends and momentum better than simple rolling averages.
+  * **Game Context Features:** Incorporated webscraped lineup data and calculated EWMA stats at home and away, feeding the model data relevant to the game instead of overly general team stats.
 
 ### 3\. Production Deployment
 
