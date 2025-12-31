@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timedelta
 import unicodedata
 import requests
 import requests_cache
@@ -109,58 +110,50 @@ def computeRecord(group):
       record_list.append(wins/(wins+losts))
     return pd.Series(record_list, index = group.index)
 
-def get_rotowire_lineups():
-    headers = {"User-Agent": "Mozilla/5.0"}
-    cache_buster = int(time.time())
-    url = f"https://www.rotowire.com/basketball/nba-lineups.php?t={cache_buster}"
-    headers = {"User-Agent": "Mozilla/5.0"}
-    r = requests.get(url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    date = soup.find("div", class_="page-title__secondary")
-    game_blocks = soup.find_all("div", class_="lineup__box")
-    date_text = soup.find("div", class_="page-title__secondary").get_text(strip=True)
-    prefix = len("Starting lineups for ")
-    date = date_text[prefix:]
-    games = []
-    for game in game_blocks:
-        try:
-            # --- Teams ---
+def get_lineups():
+    try:
+      date = (datetime.now()).strftime('%Y%m%d')
+      cache_buster = int(time.time())
+      url = f'https://stats.nba.com/js/data/leaders/00_daily_lineups_{date}.json?={cache_buster}'
+      headers = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+          "Accept": "application/json, text/plain, */*",
+          "Referer": "https://www.nba.com/",
+          "Origin": "https://www.nba.com",
+      }
+      response = requests.get(url, headers=headers)
 
-            teams = game.find_all("a", class_=("lineup__team"))
+      if response.status_code != 200:
+        date = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
+        cache_buster = int(time.time())
+        url = f'https://stats.nba.com/js/data/leaders/00_daily_lineups_{date}.json?={cache_buster}'
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+            "Accept": "application/json, text/plain, */*",
+            "Referer": "https://www.nba.com/",
+            "Origin": "https://www.nba.com",
+        }
+        response = requests.get(url, headers=headers)
+      data = response.json()
+      date_formatted = date[:4] + "-" + date[4:6] + "-" + date[6:]
+      game_data = data['games']
+      games = []
+      for game in game_data:
+        awayStartingFive = []
+        homeStartingFive = []
+        for player_home, player_away in zip(game['homeTeam']['players'][:5], game['awayTeam']['players'][:5]):
+          homeStartingFive.append(player_home['playerName'])
+          homeStartingFive.append(player_away['playerName'])
+        games.append({
+          "matchup": f"{game['awayTeam']['teamAbbreviation']} @ {game['homeTeam']['teamAbbreviation']}",
+          "away": game['awayTeam']['teamAbbreviation'],
+          "home": game['homeTeam']['teamAbbreviation'],
+          "awayLineup": awayStartingFive,
+          "homeLineup": homeStartingFive,
+          "date": date_formatted
+        })
+      return pd.DataFrame(games)
+    except Exception as e:
+            print("Error getting a lineup:", e)
 
-            away = teams[0].find("div", class_="lineup__abbr").get_text(strip=True)
-            home = teams[1].find("div", class_="lineup__abbr").get_text(strip=True)
-
-            lineup = game.find("div", class_="lineup__main")
-            awayLineup = lineup.select_one("ul.lineup__list.is-visit")
-            awayStatus = awayLineup.find("li", class_="lineup__status").get_text(strip=True)
-            awayPlayers = awayLineup.find_all("li", class_="lineup__player")
-            awayStartingFive = []
-            homeLineup = lineup.select_one("ul.lineup__list.is-home")
-            homeStatus = homeLineup.find("li", class_="lineup__status").get_text(strip=True)
-            homePlayers = homeLineup.find_all("li", class_="lineup__player")
-            homeStartingFive = []
-
-            awayLineupStrength = 0
-            homeLineupStrength = 0
-            for player in awayPlayers[:5]:
-              name = player.find("a").get("title")
-              awayStartingFive.append(name)
-            for player in homePlayers[:5]:
-              name = player.find("a").get("title")
-              homeStartingFive.append(name)
-            games.append(
-                {
-                    "matchup": f"{away} @ {home}",
-                    "away": away,
-                    "home": home,
-                    "awayStatus": awayStatus,
-                    "homeStatus": homeStatus,
-                    "awayLineup": awayStartingFive,
-                    "homeLineup": homeStartingFive,
-                    "date": date
-                }
-            )
-        except Exception as e:
-            print("Error parsing a game:", e)
-    return pd.DataFrame(games)
+    

@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* That is all you need for Tailwind v4! 
+   You can add custom global styles below if needed, 
+   but for this mockup, we will rely on utility classes.
+*/
+body {
+  @apply bg-gray-100;
+}
+
+@keyframes underlinePulse {
+  /* 0 → 25% : grow to the right (origin: left) */
+  0%   { transform-origin: left;  transform: scaleX(0); }
+  25%  { transform-origin: left;  transform: scaleX(1); }
+
+  /* tiny instant switch so the origin becomes right while scale is 1 */
+  25.01% { transform-origin: right; transform: scaleX(1); }
+
+  /* 25.01 → 50% : shrink toward the right (origin: right) */
+  50%  { transform-origin: right; transform: scaleX(0); }
+
+  /* 50.01 → 75% : grow to the left (origin: right) */
+  50.01% { transform-origin: right; transform: scaleX(0); }
+  75%    { transform-origin: right; transform: scaleX(1); }
+
+  /* tiny instant switch to left origin while scale is 1 */
+  75.01% { transform-origin: left; transform: scaleX(1); }
+
+  /* 75.01 → 100% : shrink toward the left (origin: left) */
+  100% { transform-origin: left; transform: scaleX(0); }
+}

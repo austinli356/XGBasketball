@@ -4,11 +4,37 @@ import numpy as np
 from utils import add_rolling, computeStreak, computeRecord, find_weighted_team_averages
 
 
-def process_data(df, player_df):
+def process_data(df, player_df, scraped_df):
+    for _, row in scraped_df.iterrows():
+
+        GAME_DATE = row['date']
+        home = row['home']
+        away = row['away']
+        # HOME
+
+        idx = f"{GAME_DATE}_{home}"
+        df.at[idx, 'season'] = '2025-26'
+        df.at[idx, 'MATCHUP'] = f"{home} vs. {away}"
+        df.at[idx, 'home'] = 1
+        df.at[idx, 'GAME_DATE'] = GAME_DATE
+        df.at[idx, 'TEAM_ABBREVIATION'] = home
+        df.at[idx, 'starters'] = row['homeLineup']
+
+
+        # AWAY
+        idx = f"{GAME_DATE}_{away}"
+
+        df.at[idx, 'season'] = '2025-26'
+        df.at[idx, 'MATCHUP'] = f"{away} @ {home}"
+        df.at[idx, 'home'] = 0
+        df.at[idx, 'GAME_DATE'] = GAME_DATE
+        df.at[idx, 'TEAM_ABBREVIATION'] = away
+        df.at[idx, 'starters'] = row['awayLineup']
+    df = df.sort_values(by=['TEAM_ABBREVIATION', 'GAME_DATE'], ascending=[True, True])
+
     df['starters'] = df.groupby(['TEAM_ABBREVIATION', 'season'])['starters'].shift(-1)
 
     player_df = player_df.sort_values(["PLAYER_NAME", "HOME", "GAME_DATE"])
-
     player_df = add_rolling(
         df=player_df,
         group_cols=["PLAYER_NAME", "HOME"],
@@ -16,6 +42,7 @@ def process_data(df, player_df):
         windows=[5, 10, 25],
         prefix="context_"
     )
+    
     player_df = player_df.sort_values(["PLAYER_NAME", "GAME_DATE"])
     player_df = add_rolling(
         df=player_df,

@@ -5,14 +5,16 @@ export interface Team {
   abbreviation: string;
   score: number;
   color: string;
-  winProb: null;
+  winProb: number | null;
 }
 
 export interface Game {
   id: string; // 
   homeTeam: Team;
   visitorTeam: Team;
-  gameStatusText: string;  
+  gameStatusText: string; 
+  gameState: number; 
   timeLeft: string;
-  isLive: boolean;
+  lastPlay: string;
+
 }

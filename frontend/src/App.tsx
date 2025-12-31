@@ -1,51 +1,78 @@
 // src/App.tsx
-import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Game} from './types'; 
 
-const parseClock = (clock: string) => {
-  const [min, sec] = clock.split(":").map(Number);
-  return min * 60 + sec;
+const DateScroller: React.FC<{ setDate: (d: Date) => void }> = ({ setDate }) => {
+  const [centerDate, setCenterDate] = useState(new Date());
+
+  const visibleDates = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(centerDate);
+      d.setDate(centerDate.getDate() - (3 - i));
+      return d;
+    });
+  }, [centerDate]);
+  
+  const shift = (amount: number) => {
+    const next = new Date(centerDate);
+    next.setDate(centerDate.getDate() + amount);
+    setCenterDate(next);
+    setDate(next)
+  };
+
+  return (
+    <div className="flex items-center gap-4 p-4">
+      <button onClick={() => shift(-1)} className="p-1 text-gray-400 hover:text-black text-xl">&larr;</button>
+      
+      <div className="flex items-center gap-6">
+        {visibleDates.map((date) => {
+          const isSelected = date.toDateString() === centerDate.toDateString();
+          return (
+            <div 
+              key={date.toISOString()}
+              onClick={() => setCenterDate(date)}
+              className={`cursor-pointer transition-all duration-200 flex flex-col items-center ${
+                isSelected ? 'opacity-100 scale-110' : 'opacity-30 hover:opacity-50'
+              }`}
+            >
+              <span className="text-[10px] font-bold uppercase text-gray-400">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+              <span className="text-sm font-black">{date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              {isSelected && <div className="w-1 h-1 bg-blue-600 rounded-full mt-1" />}
+            </div>
+          );
+        })}
+      </div>
+
+      <button onClick={() => shift(1)} className="p-1 text-gray-400 hover:text-black text-xl">&rarr;</button>
+    </div>
+  );
 };
 
-const formatClock = (seconds: number) => {
-  const m = Math.floor(seconds / 60).toString().padStart(2, "0");
-  const s = (seconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
-};
-
-const getLogoUrl = (text: string) => 
-  `/src/logos/${text}.png`;
 
 const GameCard: React.FC<{ game: Game, onCalculate: (game: Game) => void }> = ({ game, onCalculate }) => {
-  const [localClock, setLocalClock] = useState(parseClock(game.gameStatusText));
-  const areWinProbsCalculated = 
-    game.homeTeam.winProb !== null && 
-    game.visitorTeam.winProb !== null;
-    const showButton = !areWinProbsCalculated && game.gameState!=3;
-  // Whenever the API updates gameStatusText, realign the clock
-  useEffect(() => {
-    setLocalClock(parseClock(game.gameStatusText));
-  }, [game.gameStatusText]);
+    const areWinProbsCalculated = 
+      game.homeTeam.winProb !== null && 
+      game.visitorTeam.winProb !== null;
+    const showButton = !areWinProbsCalculated
+    const [lastPlay, setLastPlay] = useState(game.lastPlay);
 
-  // Start ticking if game is live
-  useEffect(() => {
-    if (!game.isLive) return;
+    useEffect(() => {
+      setLastPlay(game.lastPlay);
+    }, [game.lastPlay]);
 
-    const interval = setInterval(() => {
-      setLocalClock((prev) => Math.max(prev - 1, 0));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [game.isLive]);
   return (
     <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
       {/* Header: Quarter & Time */}
       <div className="bg-gray-50 px-4 py-2 flex justify-between items-center border-b border-gray-100">
-        <span className={`text-xs font-bold uppercase tracking-wider ${game.isLive ? 'text-red-600 animate-pulse' : 'text-gray-500'}`}>
+        <span className={`text-xs font-bold uppercase tracking-wider ${game.gameState==2 ? 'text-red-600 animate-pulse' : 'text-gray-500'}`}>
           {game.gameState==2 ? '● Live' : (game.gameState==1 ? 'Upcoming' : 'Final')}
         </span>
         <span className="text-sm font-medium text-gray-700">
           {game.gameStatusText}
+          {game.gameState==2 && game.gameStatusText.includes(":") && (<span className="flex left-0 right-0 -bottom-0.5 h-[2px] bg-red-400 origin-left"
+                style={{ animation: "underlinePulse 2.5s ease-in-out infinite alternate" }}>
+          </span>)}
         </span>
       </div>
 
@@ -54,7 +81,7 @@ const GameCard: React.FC<{ game: Game, onCalculate: (game: Game) => void }> = ({
         {/* Visitor Team */}
         <div className="flex flex-col items-center w-1/3">
           <img 
-            src={getLogoUrl(game.visitorTeam.abbreviation)} 
+            src={`/assets/${game.visitorTeam.abbreviation}.png`} 
             alt={game.visitorTeam.name} 
             className="w-25 h-25 object-contain"
           />
@@ -69,34 +96,45 @@ const GameCard: React.FC<{ game: Game, onCalculate: (game: Game) => void }> = ({
         {/* Home Team */}
         <div className="flex flex-col items-center w-1/3">
           <img 
-            src={getLogoUrl(game.homeTeam.abbreviation)} 
+            src={`/assets/${game.homeTeam.abbreviation}.png`} 
             alt={game.homeTeam.name} 
             className="w-25 h-25 object-contain"
           />
-          <p className="text-2xl font-black text-gray-900 mt-1">{game.gameState>2 ? game.homeTeam.score : ""}</p>
+          <p className="text-2xl font-black text-gray-900 mt-1">{game.gameState>1 ? game.homeTeam.score : ""}</p>
         </div>
+      </div>
+      <div className="mb-1 relative h-8 overflow-hidden px-4 py-2 text-center border-t border-gray-50 text-xs text-gray-600">
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={lastPlay}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0, rotate: -6 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            {lastPlay}
+          </motion.div>
+        </AnimatePresence>
       </div>
       {game.homeTeam.winProb !== null && game.visitorTeam.winProb !== null && (
           <div className="relative bottom-0 left-0 w-full h-6 flex justify-center rounded-b">           
-            {/* <div
-              className="bg-blue-500 h-full rounded-l left-0"
-              style={{ width: `${game.visitorTeam.winProb/1.2}%` }}
-            > */}
-            <h3 className="flex justify-center text-red-600 text-sm">
-              The model believes the {game.visitorTeam.winProb>game.homeTeam.winProb ? game.visitorTeam.name : game.homeTeam.name} have a {game.visitorTeam.winProb>game.homeTeam.winProb ? game.visitorTeam.winProb : game.homeTeam.winProb}% chance of winning
+            <h3 className="flex flex-col justify-center items-center text-red-600 text-sm">
+                <span className="text-center">XGB pregame predicted winner:</span>
+                <span className="text-center">
+                    {game.visitorTeam.winProb > game.homeTeam.winProb
+                        ? game.visitorTeam.name
+                        : game.homeTeam.name}{' '}
+                    ({game.visitorTeam.winProb > game.homeTeam.winProb
+                        ? game.visitorTeam.winProb
+                        : game.homeTeam.winProb}%)
+                </span>
             </h3>
-            {/* </div> */}
-            {/* <div
-              className="bg-red-500 h-full rounded-r right-0"
-              style={{ width: `${game.homeTeam.winProb/1.2}%` }}
-            > */}
-            {/* <h3 className="flex justify-center font-bold text-black text-sm">W: {game.homeTeam.winProb}%</h3> */}
-            {/* </div> */}
           </div>
       )}
       {showButton && <button
         onClick={() => onCalculate(game)}
-        className="w-full bg-blue-400 text-white py-2 text-sm font-semibold hover:bg-blue-700"
+        className="w-full bg-blue-400 text-white py-2 text-sm font-semibold hover:bg-blue-500"
       >
         Predict Winner
       </button>}
@@ -108,16 +146,21 @@ const GameCard: React.FC<{ game: Game, onCalculate: (game: Game) => void }> = ({
 };
 
 
-const App: React.FC = () => {
+const App: React.FC = () => { 
+  const [date, setDate] = useState(new Date());
   const [liveGames, setLiveGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const formatDate = (d: Date) =>
+    d.toISOString().split("T")[0];
+
   // Function to fetch data from your Python backend
-  const fetchLiveScores = async () => {
+  const fetchLiveScores = async (selectedDate: Date) => {
     try {
-      // 1. Call your local Python API endpoint (running on port 5000)
-      const response = await fetch('http://localhost:5000/api/nba-scores');
+      const dateStr = formatDate(selectedDate);
+
+      const response = await fetch('/api/nba-scores');
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -157,7 +200,7 @@ const App: React.FC = () => {
   };
   const runCalculationsForGame = async (game: Game) => {
     try {
-      const response = await fetch("http://localhost:5000/run-calculations", {
+      const response = await fetch("/run-calculations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ home: game.homeTeam.abbreviation }),
@@ -194,13 +237,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Fetch immediately on mount
-    fetchLiveScores();
-
-    const intervalId = setInterval(fetchLiveScores, 10000); 
+    fetchLiveScores(date);
+    
+    const intervalId = setInterval(() => {
+      fetchLiveScores(date);
+    }, 15000);
 
     // Cleanup function to clear the interval when the component is unmounted
     return () => clearInterval(intervalId);
-  }, []); // Empty dependency array means this runs once on mount
+  }, [date]); 
 
   // --- Conditional Rendering for Loading and Errors ---
   if (isLoading) {
@@ -224,9 +269,10 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 flex flex-col items-center">
       <h1 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">
-        NBA <span className="text-blue-600">Live</span> Scores
+        NBA <span className="text-blue-600">XGBoost</span> Model
       </h1>
-      
+      <DateScroller
+      setDate={setDate}/>
       <div className="w-full flex flex-col items-center space-y-4 pb-10">
         {/* Render the fetched liveGames */}
         {liveGames.length > 0 ? (
@@ -234,7 +280,7 @@ const App: React.FC = () => {
             <GameCard 
               key={game.id} 
               game={game} 
-              onCalculate={runCalculationsForGame}   // <-- ADD THIS
+              onCalculate={runCalculationsForGame}   
             />
           ))
         ) : (

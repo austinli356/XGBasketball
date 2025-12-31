@@ -1,56 +1,70 @@
-# Logs
-logs
-*.log
+############################
+# Python
+############################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python build / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+############################
+# Data / Runtime Artifacts
+############################
+input.json
+*.sqlite
+*.sqlite3
+*.db
+
+############################
+# Environment / Secrets
+############################
+.env
+.env.*
+secrets.*
+credentials.*
+
+############################
+# Node / Frontend
+############################
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite
-*.db
-*.egg-info/
-.env
-*.log
-
-# Node / Frontend
-node_modules/
+# Vite / build output
 dist/
 build/
-.vite/
 
-# IDE / Editor
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
+############################
+# TypeScript
+############################
+*.tsbuildinfo
 
-# System files
+############################
+# OS / Editor
+############################
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/
+*.swp
 
-backend/
-*.json
-*.sqlite
+############################
+# Logs
+############################
+logs/
+*.log
+
