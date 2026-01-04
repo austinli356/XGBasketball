@@ -32,10 +32,10 @@ The application is split into three core layers:
 
 ## 🚦 Getting Started
 
-### Installation
-## Requirements:
-Node.js(v24.11.1+) and npm
-Python 3.10+
+#### Requirements
+* Node.js(v24.11.1+) and npm
+* Python 3.10+
+
 
 1. Clone the repository:
 ```bash
