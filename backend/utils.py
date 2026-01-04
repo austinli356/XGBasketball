@@ -150,7 +150,8 @@ def get_lineups():
           "home": game['homeTeam']['teamAbbreviation'],
           "awayLineup": awayStartingFive,
           "homeLineup": homeStartingFive,
-          "date": date_formatted
+          "date": date_formatted,
+          "gameId": game['gameId']
         })
       return pd.DataFrame(games)
     except Exception as e:

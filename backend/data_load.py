@@ -15,6 +15,17 @@ from utils import strip, WNI, rate_limited_call, get_lineups
 from tqdm import tqdm
 
 def load_data():
+    cache_buster = int(time.time())
+    url = f'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?t={cache_buster}'
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://www.nba.com/",
+        "Origin": "https://www.nba.com",
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    current_date = data['scoreboard']['gameDate']
     teams = ['ATL', 'BOS', 'BKN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU',
             'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL',
             'PHI', 'PHX', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']
@@ -27,25 +38,11 @@ def load_data():
 
     #get boxscores across every season in seasons
     for season in seasons:
-        cache_buster = int(time.time())
-        url = f'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?t={cache_buster}'
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
-            "Accept": "application/json, text/plain, */*",
-            "Referer": "https://www.nba.com/",
-            "Origin": "https://www.nba.com",
-        }
-        response = requests.get(url, headers=headers)
-        data = response.json()
-        date = data['scoreboard']['gameDate']
-
-
- 
         gamefinder = leaguegamefinder.LeagueGameFinder(
             league_id_nullable='00',
             season_nullable=season,
             season_type_nullable='Regular Season',
-            date_to_nullable = (datetime.strptime(date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
+            date_to_nullable = (datetime.strptime(current_date, '%Y-%m-%d') - timedelta(days=1)).strftime('%Y-%m-%d')
         ) if season =='2025-26' else leaguegamefinder.LeagueGameFinder(
             league_id_nullable='00',
             season_nullable=season,
@@ -63,7 +60,6 @@ def load_data():
         df['WL'] = (df['WL'] == 'W').astype(int)
 
         frames.append(df)
-
     box_df = pd.concat(frames, ignore_index=True)
     box_df.reset_index(drop=True, inplace=True)
     box_df.sort_values(by=['TEAM_ABBREVIATION', 'season', 'GAME_DATE'], ascending=[True, True, True], inplace=True)
@@ -128,7 +124,6 @@ def load_data():
     df['idx'] = df['GAME_DATE'].astype(str) + '_' + df['TEAM_ABBREVIATION'].astype(str)
     df.set_index('idx', inplace=True)
 
-    
-    return df, player_df, scraped_df
+    return df, player_df, scraped_df, current_date
 
 

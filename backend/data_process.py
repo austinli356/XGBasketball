@@ -6,7 +6,6 @@ from utils import add_rolling, computeStreak, computeRecord, find_weighted_team_
 
 def process_data(df, player_df, scraped_df):
     for _, row in scraped_df.iterrows():
-
         GAME_DATE = row['date']
         home = row['home']
         away = row['away']
@@ -19,7 +18,7 @@ def process_data(df, player_df, scraped_df):
         df.at[idx, 'GAME_DATE'] = GAME_DATE
         df.at[idx, 'TEAM_ABBREVIATION'] = home
         df.at[idx, 'starters'] = row['homeLineup']
-
+        df.at[idx, 'GAME_ID'] = row['gameId']
 
         # AWAY
         idx = f"{GAME_DATE}_{away}"
@@ -30,6 +29,8 @@ def process_data(df, player_df, scraped_df):
         df.at[idx, 'GAME_DATE'] = GAME_DATE
         df.at[idx, 'TEAM_ABBREVIATION'] = away
         df.at[idx, 'starters'] = row['awayLineup']
+        df.at[idx, 'GAME_ID'] = row['gameId']
+
     df = df.sort_values(by=['TEAM_ABBREVIATION', 'GAME_DATE'], ascending=[True, True])
 
     df['starters'] = df.groupby(['TEAM_ABBREVIATION', 'season'])['starters'].shift(-1)
@@ -87,7 +88,6 @@ def process_data(df, player_df, scraped_df):
 
     df['target'] = df.groupby(['TEAM_ABBREVIATION', 'season'])['WL'].shift(-1).astype('Int64')
     df['next_home'] = df.groupby(['TEAM_ABBREVIATION', 'season'])['home'].shift(-1).astype('Int64')
-
     df['GAME_DATE'] = pd.to_datetime(df['GAME_DATE'], format='%Y-%m-%d')
     df['next_GAME_DATE'] = df.groupby(['TEAM_ABBREVIATION', 'season'])['GAME_DATE'].shift(-1)
 
@@ -196,11 +196,9 @@ def process_data(df, player_df, scraped_df):
     df["month_lineup_difference"] = df['lineup_10_rolling_WNI'] - df['opp_lineup_10_rolling_WNI']
     df["recent_lineup_difference"] = df["lineup_5_rolling_WNI"] - df['opp_lineup_5_rolling_WNI']
     df['rest_difference'] = df['rest_days'] - df['opp_rest_days']
-
+    
     df[selected_columns] = df[selected_columns].astype(float)
+    df['next_GAME_ID'] = df.groupby(['TEAM_ABBREVIATION', 'season'])['GAME_ID'].shift(-1)
     df = df.dropna(subset=selected_columns)
     df.reset_index(drop=True, inplace=True)
-
-    future_X = df[df['target'].isna()]
-
-    return future_X
+    return df.copy()

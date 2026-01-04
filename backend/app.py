@@ -16,6 +16,12 @@ CORS(app)
 # Dockerized XGB prediction service URL
 XGB_SERVICE_URL = "https://xgb-predictor-latest.onrender.com/predict"
 
+session = requests.Session()
+session.headers.update({
+    "User-Agent": "Mozilla/5.0...",
+    "Accept": "application/json, text/plain, */*",
+})
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve(path):
@@ -25,25 +31,34 @@ def serve(path):
 
 
 print("Loading data...")
-raw_df, player_df, scraped_df = load_data()
-games_to_predict = process_data(raw_df, player_df, scraped_df)
-home_rows = games_to_predict[games_to_predict['next_home'] == 1]
+raw_df, player_df, scraped_df, date = load_data()
+feature_df = process_data(raw_df, player_df, scraped_df)
+
+
+url = f'https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json?t={int(time.time())}'
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://www.nba.com/",
+    "Origin": "https://www.nba.com",
+}
+response = session.get(url, headers=headers)
+scheduleLeagueV2data = response.json()
 print("Data loaded and processed!")
 
 @app.route("/run-calculations", methods=["POST"])
 def get_predictions():
     try:
         data = request.get_json()
-        home = data.get("home") 
+        gameid = data.get("gameId") 
 
-        if not home:
+        if not gameid:
             return jsonify({"error": "Missing 'home' in request body"}), 400
+        game_rows = feature_df[((feature_df['next_GAME_ID'] == gameid) & (feature_df['next_home'] == 1))]
+        if game_rows.empty:
+            return jsonify({"error": f"No data found for team {gameid}"}), 404
 
-        team_rows = home_rows[home_rows['TEAM_ABBREVIATION'] == home]
-        if team_rows.empty:
-            return jsonify({"error": f"No data found for team {home}"}), 404
-
-        row_dict = team_rows[features].iloc[0].to_dict()
+        row_dict = game_rows[features].iloc[0].to_dict()
 
         try:
             response = requests.post(XGB_SERVICE_URL, json={"row": row_dict})
@@ -53,9 +68,7 @@ def get_predictions():
         except Exception as e:
             print(f"XGB service error: {e}")
             home_win_prob = None
-
-        home_win_probs = {home: home_win_prob}
-        return jsonify({"home_win_probs": home_win_probs})
+        return jsonify({"home_win_prob": home_win_prob})
 
     except Exception as e:
         print(f"Error in get_predictions: {e}")
@@ -64,20 +77,26 @@ def get_predictions():
 
 @app.route('/api/nba-scores', methods=['GET'])
 def get_nba_scores():
-    date = request.get_json()
+    cache_buster = int(time.time())
+    selected_date = request.args.get("date")
     try:
-        cache_buster = int(time.time())
-        url = f'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?t={cache_buster}'
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
-            "Accept": "application/json, text/plain, */*",
-            "Referer": "https://www.nba.com/",
-            "Origin": "https://www.nba.com",
-        }
-        response = requests.get(url, headers=headers)
-        data = response.json()
-        games = data['scoreboard']['games']
-
+        if selected_date == date: 
+            url = f'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?t={cache_buster}'
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+                "Accept": "application/json, text/plain, */*",
+                "Referer": "https://www.nba.com/",
+                "Origin": "https://www.nba.com",
+            }
+            response = session.get(url, headers=headers)
+            data = response.json()
+            games = data['scoreboard']['games']
+        else:
+            for day in scheduleLeagueV2data['leagueSchedule']['gameDates']: 
+                formatted = day['gameDate'].split()[0]
+                if datetime.strptime(formatted, "%m/%d/%Y").strftime("%Y-%m-%d") == selected_date:
+                    games = day['games']
+                
         boxscores = []
 
         for game in games:
@@ -95,7 +114,7 @@ def get_nba_scores():
                         "Referer": "https://www.nba.com/",
                         "Origin": "https://www.nba.com",
                     }
-                    response = requests.get(url, headers=headers)
+                    response = session.get(url, headers=headers)
                     data = response.json()
                     last_play = data['game']['actions'][-1]['description']
                 except Exception as e:

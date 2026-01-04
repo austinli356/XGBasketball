@@ -3,9 +3,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Game} from './types'; 
 
-const DateScroller: React.FC<{ setDate: (d: Date) => void }> = ({ setDate }) => {
-  const [centerDate, setCenterDate] = useState(new Date());
+const normalizeLocalDate = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
+const DateScroller: React.FC<{ setDate: (d: Date) => void }> = ({ setDate }) => {
+  const [centerDate, setCenterDate] = useState(normalizeLocalDate(new Date()));
   const visibleDates = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(centerDate);
@@ -15,8 +17,9 @@ const DateScroller: React.FC<{ setDate: (d: Date) => void }> = ({ setDate }) => 
   }, [centerDate]);
   
   const shift = (amount: number) => {
-    const next = new Date(centerDate);
+    const next = normalizeLocalDate(centerDate);
     next.setDate(centerDate.getDate() + amount);
+
     setCenterDate(next);
     setDate(next)
   };
@@ -31,7 +34,7 @@ const DateScroller: React.FC<{ setDate: (d: Date) => void }> = ({ setDate }) => 
           return (
             <div 
               key={date.toISOString()}
-              onClick={() => setCenterDate(date)}
+              onClick={() => {setCenterDate(date); setDate(date)}}
               className={`cursor-pointer transition-all duration-200 flex flex-col items-center ${
                 isSelected ? 'opacity-100 scale-110' : 'opacity-30 hover:opacity-50'
               }`}
@@ -147,20 +150,23 @@ const GameCard: React.FC<{ game: Game, onCalculate: (game: Game) => void }> = ({
 
 
 const App: React.FC = () => { 
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState(normalizeLocalDate(new Date()));
   const [liveGames, setLiveGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const formatDate = (d: Date) =>
-    d.toISOString().split("T")[0];
+    d.toLocaleDateString("en-CA");
 
   // Function to fetch data from your Python backend
-  const fetchLiveScores = async (selectedDate: Date) => {
+  const fetchLiveScores = async (selectedDate: Date, signal?: AbortSignal) => {
     try {
       const dateStr = formatDate(selectedDate);
 
-      const response = await fetch('/api/nba-scores');
+      const response = await fetch(
+      `/api/nba-scores?date=${encodeURIComponent(dateStr)}`,
+      { signal } 
+      );
 
       if (!response.ok) {
         throw new Error('Network response was not ok');
@@ -190,27 +196,33 @@ const App: React.FC = () => {
           return newGame;
         });
       });
+      
       setError(null);
-    } catch (err) {
-      setError("Could not fetch live scores. Is the Python server running?");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      console.log('Fetch aborted: newer request is in progress');
+      return;
     }
-  };
+    setError("Could not fetch live scores. Is the Python server running?");
+    console.error(err);
+  } finally {
+    setIsLoading(false); 
+  }
+};
+
   const runCalculationsForGame = async (game: Game) => {
     try {
       const response = await fetch("/run-calculations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ home: game.homeTeam.abbreviation }),
+        body: JSON.stringify({ gameId: game.id }),
       });
 
       const data = await response.json();
 
-      if (!data.home_win_probs) return;
+      if (!data.home_win_prob) return;
 
-      const rawhomeWP = data.home_win_probs[game.homeTeam.abbreviation] ?? 0;
+      const rawhomeWP = data.home_win_prob ?? 0;
       const homeWP = parseFloat((100*rawhomeWP).toFixed(2))
       const rawvisitorWP = 100 - homeWP;
       const visitorWP = parseFloat(rawvisitorWP.toFixed(2))
@@ -236,16 +248,23 @@ const App: React.FC = () => {
 
 
   useEffect(() => {
-    // Fetch immediately on mount
-    fetchLiveScores(date);
-    
-    const intervalId = setInterval(() => {
-      fetchLiveScores(date);
-    }, 15000);
+    const controller = new AbortController();
+    let intervalId: number | undefined = undefined;
 
-    // Cleanup function to clear the interval when the component is unmounted
-    return () => clearInterval(intervalId);
-  }, [date]); 
+    fetchLiveScores(date, controller.signal);
+
+    const today = new Date().toLocaleDateString();
+    if (today === date.toLocaleDateString()) {
+      intervalId = setInterval(() => {
+        fetchLiveScores(date, controller.signal);
+      }, 15000);
+    }
+
+    return () => {
+      controller.abort();
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [date]);
 
   // --- Conditional Rendering for Loading and Errors ---
   if (isLoading) {
