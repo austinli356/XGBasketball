@@ -1,4 +1,5 @@
 # 🏀 NBA Game Predictor XGBasketball
+![Recording 2026-01-04 161032 (2)](https://github.com/user-attachments/assets/c61e224b-6ecc-4bfa-9948-b862299baa67)
 
 A full-stack machine learning application that predicts the outcome of NBA games with **72% accuracy**. This project leverages Bayesian optimization for model tuning and a fully vectorized data pipeline to process historical data for over 20,000 games.
 
