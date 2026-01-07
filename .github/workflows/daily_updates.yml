@@ -1,0 +1,28 @@
+name: Daily npoint Update
+
+on:
+  push:
+      branches:
+        - main
+  schedule:
+    # Runs at 00:00 UTC every day 
+    - cron: '0 14 * * *'
+  workflow_dispatch: 
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r backend/scripts/requirements.txt  
+
+      - name: Run update script
+        run: python backend/scripts/update_npoint.py

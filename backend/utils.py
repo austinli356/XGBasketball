@@ -12,7 +12,18 @@ import numpy as np
 from bs4 import BeautifulSoup
 from nba_api.stats.endpoints import boxscoreadvancedv3
 
+last_call = 0
+MIN_INTERVAL = 1.2
+def rate_limited_call(game_id):
+    global last_call
+    elapsed = time.time() - last_call
+    if elapsed < MIN_INTERVAL:
+        time.sleep(MIN_INTERVAL - elapsed)
 
+    result = boxscoreadvancedv3.BoxScoreAdvancedV3(game_id=game_id).get_dict()
+
+    last_call = time.time()
+    return result
 
 def removeSuffix(s):
   split = s.strip().split(" ")
@@ -28,27 +39,6 @@ def strip(s):
   stripped = ''.join(c for c in normalized if unicodedata.category(c) != 'Mn')
 
   return removeSuffix(stripped)
-
-last_call = 0
-MIN_INTERVAL = 1.2
-def rate_limited_call(game_id):
-  global last_call
-  url = f"https://stats.nba.com/stats/boxscoreadvancedv3?EndPeriod=0&EndRange=0&GameID={game_id}&RangeType=0&StartPeriod=0&StartRange=0"
-  req = Request('GET', url).prepare()
-  key = NBAStatsHTTP._session.cache.create_key(req)
-
-  cached_response = NBAStatsHTTP._session.cache.get_response(key)
-  if cached_response is not None:
-        return cached_response.json()
-
-  elapsed = time.time() - last_call
-  if elapsed < MIN_INTERVAL:
-      time.sleep(MIN_INTERVAL - elapsed)
-
-  result = boxscoreadvancedv3.BoxScoreAdvancedV3(game_id=game_id).get_dict()
-
-  last_call = time.time()
-  return result
 
 def WNI(pie, mins, usg, comment): # calculates a players impact in a given game
   if mins:
@@ -84,7 +74,6 @@ def find_weighted_team_averages(team, span, context, cols):
   else:
     out = team[cols].ewm(span=span, adjust=False).mean()
   return out
-
 
 def computeStreak(group):
     streak = 0
@@ -157,4 +146,15 @@ def get_lineups():
     except Exception as e:
             print("Error getting a lineup:", e)
 
-    
+def getEndpointDate():
+  cache_buster = int(time.time())
+  url = f'https://cdn.nba.com/static/json/liveData/scoreboard/todaysScoreboard_00.json?t={cache_buster}'
+  headers = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+      "Accept": "application/json, text/plain, */*",
+      "Referer": "https://www.nba.com/",
+      "Origin": "https://www.nba.com",
+  }
+  response = requests.get(url, headers=headers)
+  data = response.json()
+  return data['scoreboard']['gameDate']

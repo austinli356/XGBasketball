@@ -9,6 +9,7 @@ from datetime import datetime
 import pytz
 import json
 import time
+from utils import getEndpointDate
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 CORS(app)
@@ -31,9 +32,9 @@ def serve(path):
 
 
 print("Loading data...")
-raw_df, player_df, scraped_df, date = load_data()
+raw_df, player_df, scraped_df= load_data()
 feature_df = process_data(raw_df, player_df, scraped_df)
-
+date = getEndpointDate()
 
 url = f'https://cdn.nba.com/static/json/staticData/scheduleLeagueV2_1.json?t={int(time.time())}'
 headers = {

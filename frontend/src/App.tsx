@@ -1,7 +1,7 @@
 // src/App.tsx
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useState, useEffect, useMemo } from 'react';
-import type { Game} from './types'; 
+import type { Game } from './types'; 
 
 const normalizeLocalDate = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -158,7 +158,6 @@ const App: React.FC = () => {
   const formatDate = (d: Date) =>
     d.toLocaleDateString("en-CA");
 
-  // Function to fetch data from your Python backend
   const fetchLiveScores = async (selectedDate: Date, signal?: AbortSignal) => {
     try {
       const dateStr = formatDate(selectedDate);
@@ -172,7 +171,6 @@ const App: React.FC = () => {
         throw new Error('Network response was not ok');
       }
 
-      // 2. Data is already formatted correctly by Python, so we cast it to Game[]
       const data: Game[] = await response.json();
       setLiveGames((prev) => {
         const existingGamesMap = new Map(prev.map(g => [g.id, g]));
