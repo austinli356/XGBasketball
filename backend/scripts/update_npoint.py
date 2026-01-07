@@ -7,6 +7,12 @@ import requests_cache
 from nba_api.stats.library.http import NBAStatsHTTP
 from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv3
 from nba_api.live.nba.endpoints import scoreboard
+
+import sys
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
 from utils import WNI, rate_limited_call
 NPOINTadvanced = 'https://api.npoint.io/f6865f48b4a169d10f84'
 NPOINTplayer = 'https://api.npoint.io/207625bb75818939a394'
@@ -29,7 +35,7 @@ def main():
         season_nullable='2025-26',
         season_type_nullable='Regular Season',
     )
-    
+
     df = gamefinder.get_data_frames()[0]
     df.dropna(subset=['WL'], inplace=True)
     all_team_rows = []
