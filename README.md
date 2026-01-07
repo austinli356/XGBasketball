@@ -1,73 +1,69 @@
-# React + TypeScript + Vite
+# 🏀 NBA Game Predictor XGBasketball
+![Recording 2026-01-04 161032 (2)](https://github.com/user-attachments/assets/c61e224b-6ecc-4bfa-9948-b862299baa67)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack machine learning application that predicts the outcome of NBA games with **72% accuracy**. This project leverages Bayesian optimization for model tuning and a fully vectorized data pipeline to process historical data for over 20,000 games.
 
-Currently, two official plugins are available:
+## 🚀 Technical Highlights
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+* **Model Performance:** Achieved 72% accuracy on the 2025–26 season using an **XGBoost Classifier**.
+* **Feature Engineering:** Engineered 200+ temporal metrics using **Exponentially Weighted Moving Averages (EWMA)** to capture team momentum. Included daily lineup data from an official NBA endpoint.
+* **Optimization:** Utilized **Optuna** for Bayesian hyperparameter tuning and **SHAP** to interpret feature importance (e.g., identifying "Rest Days" and "net rating difference" as top predictors).
+* **Sub-second Inference:** Designed a End to End application which delivers prediction from the docker containerized model to the frontend in under 1 second.
 
-## React Compiler
+## 🏗️ System Architecture
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The application is split into three core layers:
 
-## Expanding the ESLint configuration
+1. **Backend:** A robust Flash API pipeline that aggregates, cleans and engineers data from the `nba_api` and web-scraped sources into standardized DataFrames. 
+2. **ML Service:** A Fast API that serves as the inference engine, running within a Docker container.
+3. **Frontend:** A modern React/TypeScript dashboard that displays nba games and model prediction.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠️ Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+* **Languages:** Python
+* **Machine Learning:** XGBoost, Scikit-learn, Optuna, SHAP
+* **Data Processing:** Pandas, NumPy
+* **Backend:** Flask, Fast API
+* **Frontend:** Typescript, React, Tailwind CSS
+* **DevOps:** Docker, GitHub
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## 🚦 Getting Started
+
+#### Requirements
+* Node.js(v24.11.1+) and npm
+* Python 3.10+
+
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/nba-xgboost-predictor.git
+cd nba-live
 ```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Install the requirements:
+```bash
+cd backend
+python -m venv venv # create a virtual environment
+pip install -r requirements.txt
+python app.py # start the Flask server
 ```
+3. Create the distribution
+```bash
+cd frontend
+npm run build
+```
+4.  Access the dashboard at `http://127.0.0.1:5000`.
+
+
+---
+
+## 📈 Future Roadmap
+
+* [ ] Display detailed matchup statistics.
+* [ ] Retrain and Redeploy XGBoost model with better engineered features and pregame betting spread data.
+* [ ] Extend model prediction from binary classification to point spreads.
+
+---
