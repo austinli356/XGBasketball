@@ -90,3 +90,6 @@ def main():
 
     update_advanced_response = requests.post(NPOINTadvanced, json=updated_advanced_list)
     update_player_response = requests.post(NPOINTplayer, json=updated_player_list)
+
+if __name__ == "__main__":
+    main()

@@ -35,9 +35,9 @@ def load_data():
     
     box_df = gamefinder.get_data_frames()[0]
     box_df.dropna(subset=['WL'], inplace = True)
-    box_df = df.drop(columns=drop_cols)
-    box_df.insert(3, "season", season)
-    box_df.insert(4, "home", df["MATCHUP"].str.contains("vs").astype(int))
+    box_df = box_df.drop(columns=drop_cols)
+    box_df.insert(3, "season", '2025-26')
+    box_df.insert(4, "home", box_df["MATCHUP"].str.contains("vs").astype(int))
     box_df.insert(7, "target", None)
     box_df['WL'] = (box_df['WL'] == 'W').astype(int)
     box_df.sort_values(by=['TEAM_ABBREVIATION', 'season', 'GAME_DATE'], ascending=[True, True, True], inplace=True)
