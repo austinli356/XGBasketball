@@ -44,7 +44,7 @@ def load_data():
 
 
     try:
-        uri = 
+        uri = os.environ.get("MONGO_URI")
         client = MongoClient(uri, server_api=ServerApi('1'))
         playerCollection = client['player']['dataframe']
         advancedCollection = client['advanced']['dataframe']
