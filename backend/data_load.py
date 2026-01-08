@@ -44,7 +44,7 @@ def load_data():
 
 
     try:
-        uri = "mongodb+srv://austinli356_db_user:wdiOeb66trjWj0CS@cluster0.3f6k8un.mongodb.net/?appName=Cluster0"
+        uri = 
         client = MongoClient(uri, server_api=ServerApi('1'))
         playerCollection = client['player']['dataframe']
         advancedCollection = client['advanced']['dataframe']
