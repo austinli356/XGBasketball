@@ -7,37 +7,51 @@ import requests_cache
 from nba_api.stats.library.http import NBAStatsHTTP
 from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv3
 from nba_api.live.nba.endpoints import scoreboard
-
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 import sys
 import os
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 from utils import WNI, rate_limited_call
-NPOINTadvanced = 'https://api.npoint.io/f6865f48b4a169d10f84'
-NPOINTplayer = 'https://api.npoint.io/207625bb75818939a394'
 
+uri = os.environ.get("MONGO_URI")
+if not uri:
+    raise ValueError("MONGO_URI environment variable is not set!")
+client = MongoClient(uri, server_api=ServerApi('1'))
+
+custom_headers = {
+    'Host': 'stats.nba.com',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Referer': 'https://stats.nba.com/',
+    'Connection': 'keep-alive',
+    'Origin': 'https://stats.nba.com',
+}
 
 def main():
     try:
-        player = requests.get(NPOINTplayer)
-        player.raise_for_status() # Check if the request was successful
-        player_df = pd.DataFrame(player.json())
-        advanced = requests.get(NPOINTadvanced)
-        advanced.raise_for_status() # Check if the request was successful
-        advanced_df = pd.DataFrame(advanced.json())
+        playerCollection = client['player']['dataframe']
+        advancedCollection = client['advanced']['dataframe']
+        player_df = pd.DataFrame(list(playerCollection.find({}, {'_id': 0})))
+        advanced_df = pd.DataFrame(list(advancedCollection.find({}, {'_id': 0})))
     except Exception as e:
-        print(f"Error fetching from npoint: {e}")
+        print(f"Error fetching from mongodb: {e}")
         return
     
     gamefinder = leaguegamefinder.LeagueGameFinder(
         league_id_nullable='00',
         season_nullable='2025-26',
         season_type_nullable='Regular Season',
+        headers = custom_headers
     )
 
     df = gamefinder.get_data_frames()[0]
     df.dropna(subset=['WL'], inplace=True)
+    df = df.sort_values('GAME_DATE')
     all_team_rows = []
     all_player_rows = []
 
@@ -49,8 +63,10 @@ def main():
 
                 if advanced_boxscore['boxScoreAdvanced']['awayTeam']['teamTricode'] == teamcode:
                     team = advanced_boxscore['boxScoreAdvanced']['awayTeam']
+                    home = 0
                 else:
                     team = advanced_boxscore['boxScoreAdvanced']['homeTeam']
+                    home = 1
                 team_stats = team['statistics']
 
                 all_team_rows.append({
@@ -73,23 +89,23 @@ def main():
                         "TEAM_ABBREVIATION": teamcode,
                         "HOME": home,
                         "WNI": WNI(stats['PIE'], stats['minutes'], stats['usagePercentage'], p['comment']),
-                    })
-        
+                    })        
 
             except Exception as e:
                 print(f"Error processing {gameid}: {e}")
 
     new_advanced = pd.DataFrame(all_team_rows)
     new_player = pd.DataFrame(all_player_rows)
+    
+    if not new_player.empty:
+        player_records = new_player.to_dict('records')
+        playerCollection.insert_many(player_records)
+        print(f"Added {len(player_records)} new player rows.")
 
-    updated_advanced = pd.concat([advanced_df, new_advanced], ignore_index=True)
-    updated_player = pd.concat([player_df, new_player], ignore_index=True)
-
-    updated_advanced_list = updated_advanced.to_dict(orient='records')
-    updated_player_list = updated_player.to_dict(orient='records')
-
-    update_advanced_response = requests.post(NPOINTadvanced, json=updated_advanced_list)
-    update_player_response = requests.post(NPOINTplayer, json=updated_player_list)
+    if not new_advanced.empty:
+        advanced_records = new_advanced.to_dict('records')
+        advancedCollection.insert_many(advanced_records)
+        print(f"Added {len(advanced_records)} new advanced stats rows.")
 
 if __name__ == "__main__":
     main()

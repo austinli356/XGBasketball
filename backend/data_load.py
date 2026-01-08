@@ -13,11 +13,10 @@ from nba_api.stats.endpoints import leaguegamefinder, boxscoreadvancedv3
 from nba_api.live.nba.endpoints import scoreboard
 from utils import strip, WNI, rate_limited_call, get_lineups
 from tqdm import tqdm
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 def load_data():
-    NPOINTadvanced = 'https://api.npoint.io/f6865f48b4a169d10f84' 
-    NPOINTplayer = 'https://api.npoint.io/207625bb75818939a394'
-
     teams = ['ATL', 'BOS', 'BKN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU',
             'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL',
             'PHI', 'PHX', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']
@@ -45,12 +44,12 @@ def load_data():
 
 
     try:
-        player = requests.get(NPOINTplayer)
-        player.raise_for_status() # Check if the request was successful
-        player_df = pd.DataFrame(player.json())
-        advanced = requests.get(NPOINTadvanced)
-        advanced.raise_for_status() # Check if the request was successful
-        advanced_df = pd.DataFrame(advanced.json())
+        uri = "mongodb+srv://austinli356_db_user:wdiOeb66trjWj0CS@cluster0.3f6k8un.mongodb.net/?appName=Cluster0"
+        client = MongoClient(uri, server_api=ServerApi('1'))
+        playerCollection = client['player']['dataframe']
+        advancedCollection = client['advanced']['dataframe']
+        player_df = pd.DataFrame(list(playerCollection.find({}, {'_id': 0})))
+        advanced_df = pd.DataFrame(list(advancedCollection.find({}, {'_id': 0})))
     except Exception as e:
         print(f"Error fetching from npoint: {e}")
         return

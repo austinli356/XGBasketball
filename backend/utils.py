@@ -10,14 +10,22 @@ from nba_api.stats.endpoints import boxscoreadvancedv3
 
 last_call = 0
 MIN_INTERVAL = 1.2
-
+custom_headers = {
+    'Host': 'stats.nba.com',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0',
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Referer': 'https://stats.nba.com/',
+    'Connection': 'keep-alive',
+    'Origin': 'https://stats.nba.com',
+}
 def rate_limited_call(game_id):
     global last_call
     elapsed = time.time() - last_call
     if elapsed < MIN_INTERVAL:
         time.sleep(MIN_INTERVAL - elapsed)
 
-    result = boxscoreadvancedv3.BoxScoreAdvancedV3(game_id=game_id).get_dict()
+    result = boxscoreadvancedv3.BoxScoreAdvancedV3(game_id=game_id, headers=custom_headers).get_dict()
 
     last_call = time.time()
     return result
