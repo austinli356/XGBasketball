@@ -15,6 +15,8 @@ from utils import strip, WNI, rate_limited_call, get_lineups
 from tqdm import tqdm
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import os
+import sys
 
 def load_data():
     teams = ['ATL', 'BOS', 'BKN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU',
@@ -51,7 +53,7 @@ def load_data():
         player_df = pd.DataFrame(list(playerCollection.find({}, {'_id': 0})))
         advanced_df = pd.DataFrame(list(advancedCollection.find({}, {'_id': 0})))
     except Exception as e:
-        print(f"Error fetching from npoint: {e}")
+        print(f"Error fetching from mongodb: {e}")
         return
     
     player_df = player_df.sort_values(by=['GAME_DATE'])

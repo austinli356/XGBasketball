@@ -17,9 +17,7 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 from utils import WNI, rate_limited_call
 
-uri = os.environ.get("MONGO_URI")
-if not uri:
-    raise ValueError("MONGO_URI environment variable is not set!")
+uri = os.environ['MONGO_URI']
 client = MongoClient(uri, server_api=ServerApi('1'))
 
 custom_headers = {

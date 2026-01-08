@@ -25,4 +25,6 @@ jobs:
         run: pip install -r backend/scripts/requirements.txt  
 
       - name: Run update script
+        env: 
+          MONGO_URI: ${{ secrets.MONGO_URI }}  
         run: python backend/scripts/update_npoint.py
