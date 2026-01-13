@@ -31,6 +31,7 @@ custom_headers = {
 }
 
 def main():
+    NBAStatsHTTP().headers = custom_headers
     try:
         playerCollection = client['player']['dataframe']
         advancedCollection = client['advanced']['dataframe']

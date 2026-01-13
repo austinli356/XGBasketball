@@ -7,6 +7,8 @@ from requests.models import Request
 import pandas as pd
 import numpy as np
 from nba_api.stats.endpoints import boxscoreadvancedv3
+from nba_api.stats.library.http import NBAStatsHTTP
+
 
 last_call = 0
 MIN_INTERVAL = 1.2
@@ -20,6 +22,7 @@ custom_headers = {
     'Origin': 'https://stats.nba.com',
 }
 def rate_limited_call(game_id):
+    NBAStatsHTTP().headers = custom_headers
     global last_call
     elapsed = time.time() - last_call
     if elapsed < MIN_INTERVAL:
