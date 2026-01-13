@@ -45,7 +45,8 @@ def main():
         league_id_nullable='00',
         season_nullable='2025-26',
         season_type_nullable='Regular Season',
-        headers = custom_headers
+        headers = custom_headers,
+        timeout=60
     )
 
     df = gamefinder.get_data_frames()[0]

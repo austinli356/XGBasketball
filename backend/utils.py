@@ -28,7 +28,7 @@ def rate_limited_call(game_id):
     if elapsed < MIN_INTERVAL:
         time.sleep(MIN_INTERVAL - elapsed)
 
-    result = boxscoreadvancedv3.BoxScoreAdvancedV3(game_id=game_id, headers=custom_headers).get_dict()
+    result = boxscoreadvancedv3.BoxScoreAdvancedV3(game_id=game_id, headers=custom_headers, timeout=60).get_dict()
 
     last_call = time.time()
     return result
