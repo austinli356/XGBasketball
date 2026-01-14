@@ -25,13 +25,13 @@ custom_headers = {
     'Connection': 'keep-alive',
     'Accept': 'application/json, text/plain, */*',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Origin': 'https://stats.nba.com',
+    'Origin': 'https://www.nba.com',
     'Sec-Fetch-Site': 'same-origin',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Dest': 'empty',
-    'Referer': 'https://stats.nba.com/',
+    'Referer': 'https://www.nba.com/',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Language': 'en-US,en;q=0.9'
 }
 
 def main():
