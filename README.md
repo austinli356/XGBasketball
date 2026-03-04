@@ -14,7 +14,7 @@ A full-stack machine learning application that predicts the outcome of NBA games
 
 The application is split into three core layers:
 
-1. **Backend:** A robust Flash API pipeline that aggregates, cleans and engineers data from the `nba_api` and web-scraped sources into standardized DataFrames. 
+1. **Backend:** A robust Flask API pipeline that aggregates, cleans and engineers data from the `nba_api` and web-scraped sources into standardized DataFrames. 
 2. **ML Service:** A Fast API that serves as the inference engine, running within a Docker container.
 3. **Frontend:** A modern React/TypeScript dashboard that displays nba games and model prediction.
 
