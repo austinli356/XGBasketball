@@ -11,13 +11,15 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import sys
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 from utils import WNI, rate_limited_call
 
-uri = os.environ['MONGO_URI']
+uri = os.getenv("MONGO_URI") #os.environ['MONGO_URI']
 client = MongoClient(uri, server_api=ServerApi('1'))
 
 custom_headers = {
